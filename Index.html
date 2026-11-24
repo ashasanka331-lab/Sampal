@@ -1,0 +1,1966 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Didula Engineers — Attendance & Overtime System</title>
+  <style>
+    :root {
+      --bg-page: #f1f5f9;
+      --bg-card: #ffffff;
+      --bg-muted: #f8fafc;
+      --text-main: #0f172a;
+      --text-sub: #475569;
+      --border-color: #e2e8f0;
+      --primary: #0f172a;
+      --primary-hover: #1e293b;
+      --green: #16a34a;
+      --green-bg: #dcfce7;
+      --green-border: #86efac;
+      --red: #dc2626;
+      --red-bg: #fee2e2;
+      --red-border: #fca5a5;
+      --amber: #d97706;
+      --amber-bg: #fef3c7;
+      --blue: #2563eb;
+      --blue-bg: #dbeafe;
+      --whatsapp: #16a34a;
+      --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08);
+      --shadow-md: 0 6px 20px rgba(15, 23, 42, 0.08);
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Sinhala", Helvetica, Arial, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Strictly hidden on normal screens; shown only during print */
+    .print-only {
+      display: none !important;
+    }
+
+    /* Top App Header */
+    .app-header {
+      background: #0f172a;
+      color: #ffffff;
+      padding: 12px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .header-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .brand-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #22c55e, #0ea5e9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 16px;
+      color: #0f172a;
+      flex-shrink: 0;
+    }
+
+    .brand-title {
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+    }
+
+    .brand-subtitle {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .sync-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.12);
+      color: #fde68a;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .sync-pill.connected {
+      background: rgba(22, 163, 74, 0.22);
+      color: #86efac;
+      border-color: rgba(134, 239, 172, 0.4);
+    }
+
+    .sync-pill.syncing {
+      background: rgba(37, 99, 235, 0.25);
+      color: #93c5fd;
+      border-color: rgba(147, 197, 253, 0.4);
+    }
+
+    .sync-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .nav-btn {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+
+    .nav-btn:hover, .nav-btn:active {
+      background: rgba(255, 255, 255, 0.22);
+    }
+
+    /* Main Container */
+    .main-container {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 16px;
+      flex: 1;
+    }
+
+    .view-section {
+      display: none;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .view-section.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 16px;
+    }
+
+    /* Home Clock Card */
+    .clock-card {
+      text-align: center;
+      padding: 28px 18px;
+      border-width: 2px;
+      transition: border-color 0.3s, background-color 0.3s;
+    }
+
+    .clock-card.on-time {
+      border-color: var(--green-border);
+      background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
+    }
+
+    .clock-card.late-time {
+      border-color: var(--red-border);
+      background: linear-gradient(180deg, #fef2f2 0%, #ffffff 100%);
+    }
+
+    .clock-date {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-sub);
+      margin-bottom: 8px;
+    }
+
+    .digital-clock {
+      font-size: clamp(40px, 11vw, 72px);
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.02em;
+      line-height: 1.1;
+      margin: 6px 0 12px;
+    }
+
+    .digital-clock.clock-green {
+      color: #16a34a;
+    }
+
+    .digital-clock.clock-red {
+      color: #dc2626;
+    }
+
+    .clock-status-badge {
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 22px;
+    }
+
+    .clock-status-badge.on-time {
+      background: var(--green-bg);
+      color: #15803d;
+    }
+
+    .clock-status-badge.late-time {
+      background: var(--red-bg);
+      color: #b91c1c;
+    }
+
+    .btn-primary-giant {
+      width: 100%;
+      max-width: 460px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 18px 24px;
+      border: none;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.22);
+      transition: transform 0.12s, box-shadow 0.12s;
+    }
+
+    .btn-primary-giant:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary-giant span.sub {
+      font-size: 12px;
+      font-weight: 500;
+      color: #cbd5e1;
+    }
+
+    /* Quick Home Stats */
+    .home-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .mini-stat {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 14px 10px;
+      text-align: center;
+    }
+
+    .mini-stat-val {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .mini-stat-lbl {
+      font-size: 12px;
+      color: var(--text-sub);
+      font-weight: 600;
+    }
+
+    /* Page Top Bar */
+    .page-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      color: var(--text-main);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .page-heading {
+      font-size: 19px;
+      font-weight: 800;
+    }
+
+    /* Employee Buttons Grid */
+    .employee-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    @media (min-width: 600px) {
+      .employee-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .emp-btn {
+      width: 100%;
+      background: var(--bg-card);
+      border: 2px solid var(--border-color);
+      border-radius: 16px;
+      padding: 18px;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: var(--shadow-sm);
+      transition: border-color 0.15s, transform 0.1s;
+    }
+
+    .emp-btn:active {
+      transform: scale(0.985);
+    }
+
+    .emp-btn.is-in {
+      border-color: var(--green-border);
+      background: #f0fdf4;
+    }
+
+    .emp-btn.is-out {
+      border-color: #bfdbfe;
+      background: #eff6ff;
+    }
+
+    .emp-avatar {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      background: #e2e8f0;
+      color: #0f172a;
+      font-weight: 800;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .emp-btn.is-in .emp-avatar {
+      background: #16a34a;
+      color: #ffffff;
+    }
+
+    .emp-btn.is-out .emp-avatar {
+      background: #2563eb;
+      color: #ffffff;
+    }
+
+    .emp-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .emp-name {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+
+    .emp-status-tag {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: #f1f5f9;
+      color: #475569;
+    }
+
+    .emp-btn.is-in .emp-status-tag {
+      background: var(--green-bg);
+      color: #15803d;
+    }
+
+    .emp-btn.is-out .emp-status-tag {
+      background: var(--blue-bg);
+      color: #1d4ed8;
+    }
+
+    /* Action Page (IN / OUT) */
+    .action-profile {
+      text-align: center;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 18px;
+    }
+
+    .action-emp-name {
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--text-main);
+    }
+
+    .action-live-time {
+      font-size: 20px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      margin-top: 4px;
+    }
+
+    .shift-details-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .detail-box {
+      background: var(--bg-muted);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .detail-label {
+      font-size: 12px;
+      color: var(--text-sub);
+      font-weight: 600;
+    }
+
+    .detail-value {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-top: 2px;
+    }
+
+    .punch-buttons-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .btn-punch {
+      padding: 24px 14px;
+      border: none;
+      border-radius: 16px;
+      font-size: 22px;
+      font-weight: 900;
+      color: #ffffff;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: var(--shadow-md);
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    .btn-punch:active:not(:disabled) {
+      transform: scale(0.97);
+    }
+
+    .btn-punch:disabled {
+      opacity: 0.38;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn-in {
+      background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    }
+
+    .btn-out {
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    }
+
+    .btn-punch small {
+      font-size: 13px;
+      font-weight: 600;
+      opacity: 0.92;
+    }
+
+    /* WhatsApp Feedback Box */
+    .wa-feedback-box {
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 14px;
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      display: none;
+    }
+
+    .wa-feedback-box.visible {
+      display: block;
+    }
+
+    .wa-msg-preview {
+      font-size: 12px;
+      background: #ffffff;
+      border: 1px solid #dcfce7;
+      padding: 10px;
+      border-radius: 8px;
+      white-space: pre-line;
+      margin: 8px 0 12px;
+      color: #1e293b;
+    }
+
+    .btn-wa {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: none;
+      background: #16a34a;
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    /* Reports Page */
+    .filter-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .chip-btn {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-muted);
+      color: var(--text-main);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .chip-btn.active {
+      background: #0f172a;
+      color: #ffffff;
+      border-color: #0f172a;
+    }
+
+    .filter-inputs-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    @media (min-width: 640px) {
+      .filter-inputs-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-sub);
+      margin-bottom: 4px;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      font-size: 14px;
+      font-family: inherit;
+      background: #ffffff;
+      color: var(--text-main);
+    }
+
+    .report-actions-bar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .btn-action-sm {
+      flex: 1;
+      min-width: 140px;
+      padding: 11px 14px;
+      border-radius: 12px;
+      border: none;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-wa-report {
+      background: #16a34a;
+      color: #ffffff;
+    }
+
+    .btn-print-report {
+      background: #2563eb;
+      color: #ffffff;
+    }
+
+    .btn-sync-report {
+      background: #0f172a;
+      color: #ffffff;
+    }
+
+    /* Table */
+    .table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+
+    th {
+      background: #f8fafc;
+      color: #334155;
+      font-weight: 800;
+      padding: 11px 10px;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 10px;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .badge-status {
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .badge-in {
+      background: var(--green-bg);
+      color: #15803d;
+    }
+
+    .badge-out {
+      background: var(--blue-bg);
+      color: #1d4ed8;
+    }
+
+    /* Settings & Footer */
+    .btn-save {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      background: #0f172a;
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .btn-outline {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      background: #ffffff;
+      color: var(--text-main);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .setup-guide {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 12px;
+      color: #334155;
+      margin-top: 12px;
+    }
+
+    .setup-guide ol {
+      padding-left: 18px;
+      margin-top: 6px;
+    }
+
+    .setup-guide li {
+      margin-bottom: 4px;
+    }
+
+    .app-footer {
+      text-align: center;
+      padding: 16px;
+      font-size: 12px;
+      color: var(--text-sub);
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #0f172a;
+      color: #ffffff;
+      padding: 12px 20px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+      z-index: 999;
+      opacity: 0;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+      max-width: 90vw;
+      text-align: center;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* PRINT STYLES — Strictly active ONLY when printing */
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+
+      .no-print,
+      .app-header,
+      .app-footer,
+      .toast {
+        display: none !important;
+      }
+
+      .print-only {
+        display: block !important;
+      }
+
+      .main-container {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+
+      .card {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+      }
+
+      .print-header-box {
+        border-bottom: 2px solid #0f172a;
+        padding-bottom: 12px;
+        margin-bottom: 16px;
+        display: flex !important;
+        justify-content: space-between;
+        align-items: flex-end;
+      }
+
+      .print-signatures {
+        margin-top: 48px;
+        display: flex !important;
+        justify-content: space-between;
+        gap: 40px;
+      }
+
+      .sig-line {
+        border-top: 1px solid #0f172a;
+        padding-top: 6px;
+        width: 220px;
+        font-size: 12px;
+        font-weight: 700;
+        text-align: center;
+      }
+
+      th, td {
+        border: 1px solid #cbd5e1 !important;
+        padding: 7px 8px !important;
+        font-size: 12px !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header -->
+  <header class="app-header no-print">
+    <div class="header-inner">
+      <div class="brand-group" onclick="showView('home')">
+        <div class="brand-logo">DE</div>
+        <div>
+          <div class="brand-title">Didula Engineers</div>
+          <div class="brand-subtitle">දිදුල ඉංජිනියර්ස් • Attendance System</div>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <div id="syncPill" class="sync-pill" onclick="syncFromGoogleSheet(true)" title="Click to Sync with Google Sheet">
+          <span class="sync-dot"></span>
+          <span id="syncPillText">Local Mode</span>
+        </div>
+        <button class="nav-btn" onclick="showView('reports')">📊 වාර්තා</button>
+        <button class="nav-btn" onclick="showView('settings')">⚙️ සැකසුම්</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-container">
+
+    <!-- ==================== VIEW 1: HOME ==================== -->
+    <section id="view-home" class="view-section active">
+      <div id="clockCard" class="card clock-card on-time">
+        <div id="homeDateDisplay" class="clock-date">Loading date...</div>
+        <div id="digitalClock" class="digital-clock clock-green">08:00:00 AM</div>
+        <div>
+          <span id="clockStatusBadge" class="clock-status-badge on-time">
+            නියමිත වේලාවට පෙර / On Time (8:30 AM දක්වා කොළ පැහැය)
+          </span>
+        </div>
+
+        <button class="btn-primary-giant" onclick="showView('employees')">
+          <span>පැමිණීම / පිටවීම සටහන් කරන්න</span>
+          <span class="sub">Mark Employee IN / OUT (සේවකයින් 5 දෙනා)</span>
+        </button>
+      </div>
+
+      <!-- Today's Quick Summary -->
+      <div class="home-summary-grid">
+        <div class="mini-stat">
+          <div id="statWorkingCount" class="mini-stat-val" style="color: #16a34a;">0 / 5</div>
+          <div class="mini-stat-lbl">දැනට වැඩ (Active IN)</div>
+        </div>
+        <div class="mini-stat">
+          <div id="statCompletedCount" class="mini-stat-val" style="color: #2563eb;">0</div>
+          <div class="mini-stat-lbl">පිටව ගිය (OUT)</div>
+        </div>
+        <div class="mini-stat">
+          <div id="statAbsentCount" class="mini-stat-val" style="color: #64748b;">5</div>
+          <div class="mini-stat-lbl">නොපැමිණි (Not In)</div>
+        </div>
+      </div>
+
+      <!-- Quick Sync & Download Bar -->
+      <div class="card" style="margin-top: 16px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between;">
+        <div>
+          <div style="font-size: 14px; font-weight: 800;">Google Sheet ස්වයංක්‍රීය සම්බන්ධතාවය</div>
+          <div id="homeSheetHint" style="font-size: 12px; color: var(--text-sub);">
+            App එක Close කර නැවත විවෘත කළත් Google Sheet එකෙන් දත්ත ස්වයංක්‍රීයව ලබා ගනී.
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="chip-btn" onclick="syncFromGoogleSheet(true)">🔄 දැන් Sync කරන්න</button>
+          <button class="chip-btn" onclick="downloadHtmlApp()">⬇️ App එක Download කරන්න</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 2: EMPLOYEE LIST ==================== -->
+    <section id="view-employees" class="view-section">
+      <div class="page-bar">
+        <button class="btn-back" onclick="showView('home')">← මුල් පිටුවට (Home)</button>
+        <div class="page-heading">සේවකයා තෝරන්න (Select Employee)</div>
+        <button class="chip-btn" onclick="syncFromGoogleSheet(true)">🔄 Refresh</button>
+      </div>
+
+      <div id="employeeGrid" class="employee-grid"></div>
+    </section>
+
+    <!-- ==================== VIEW 3: EMPLOYEE ACTION (IN / OUT) ==================== -->
+    <section id="view-action" class="view-section">
+      <div class="page-bar">
+        <button class="btn-back" onclick="showView('employees')">← සේවක ලැයිස්තුවට</button>
+        <div class="page-heading">පැමිණීම / පිටවීම</div>
+      </div>
+
+      <div class="card">
+        <div class="action-profile">
+          <div id="actionEmpName" class="action-emp-name">Employee Name</div>
+          <div id="actionEmpDate" style="font-size: 13px; color: var(--text-sub); font-weight: 600;"></div>
+          <div id="actionLiveClock" class="action-live-time clock-green">08:00:00 AM</div>
+        </div>
+
+        <div class="shift-details-grid">
+          <div class="detail-box">
+            <div class="detail-label">පැමිණි වේලාව (IN)</div>
+            <div id="detailInTime" class="detail-value">--:--</div>
+          </div>
+          <div class="detail-box">
+            <div class="detail-label">පිටවූ වේලාව (OUT)</div>
+            <div id="detailOutTime" class="detail-value">--:--</div>
+          </div>
+          <div class="detail-box">
+            <div class="detail-label">වැඩ කළ කාලය (Worked)</div>
+            <div id="detailWorkDuration" class="detail-value">0h 0m</div>
+          </div>
+          <div class="detail-box">
+            <div class="detail-label">අතිකාල (Overtime / OT)</div>
+            <div id="detailOtDuration" class="detail-value" style="color: #d97706;">0h 0m</div>
+          </div>
+        </div>
+
+        <div class="punch-buttons-grid">
+          <button id="btnPunchIn" class="btn-punch btn-in" onclick="handleClockIn()">
+            <span>IN</span>
+            <small>පැමිණීම සටහන් කරන්න</small>
+          </button>
+          <button id="btnPunchOut" class="btn-punch btn-out" onclick="handleClockOut()">
+            <span>OUT</span>
+            <small>පිටවීම සටහන් කරන්න</small>
+          </button>
+        </div>
+
+        <!-- WhatsApp Instant Alert Box -->
+        <div id="waFeedbackBox" class="wa-feedback-box">
+          <div style="font-size: 14px; font-weight: 800; color: #15803d;">
+            ✅ දත්ත සුරැකුණි! WhatsApp පණිවිඩය සූදානම්:
+          </div>
+          <div id="waMsgPreview" class="wa-msg-preview"></div>
+          <a id="waDirectLink" href="#" target="_blank" rel="noopener" class="btn-wa">
+            📲 WhatsApp වෙත යවන්න (0711334788)
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 4: REPORTS & PRINT ==================== -->
+    <section id="view-reports" class="view-section">
+      <div class="page-bar no-print">
+        <button class="btn-back" onclick="showView('home')">← මුල් පිටුවට</button>
+        <div class="page-heading">පැමිණීමේ සහ OT වාර්තා</div>
+      </div>
+
+      <!-- Print-Only Formal Header -->
+      <div class="print-only print-header-box">
+        <div>
+          <h1 style="font-size: 22px; font-weight: 900; margin: 0;">Didula Engineers</h1>
+          <div style="font-size: 13px; color: #334155;">දිදුල ඉංජිනියර්ස් — Attendance &amp; Overtime Report</div>
+        </div>
+        <div style="text-align: right; font-size: 12px;">
+          <div id="printPeriodLabel">Period: --</div>
+          <div id="printGeneratedLabel">Generated: --</div>
+        </div>
+      </div>
+
+      <!-- Filter Controls -->
+      <div class="card no-print">
+        <div class="filter-chips">
+          <button class="chip-btn active" data-range="today" onclick="setReportRange('today', this)">අද (Today)</button>
+          <button class="chip-btn" data-range="week" onclick="setReportRange('week', this)">මෙම සතිය (This Week)</button>
+          <button class="chip-btn" data-range="month" onclick="setReportRange('month', this)">මෙම මාසය (This Month)</button>
+          <button class="chip-btn" data-range="all" onclick="setReportRange('all', this)">සියල්ල (All)</button>
+        </div>
+
+        <div class="filter-inputs-grid">
+          <div class="form-group">
+            <label for="filterFromDate">සිට දිනය (From Date)</label>
+            <input type="date" id="filterFromDate" class="form-control" onchange="renderReports()" />
+          </div>
+          <div class="form-group">
+            <label for="filterToDate">දක්වා දිනය (To Date)</label>
+            <input type="date" id="filterToDate" class="form-control" onchange="renderReports()" />
+          </div>
+          <div class="form-group">
+            <label for="filterEmployee">සේවකයා (Employee)</label>
+            <select id="filterEmployee" class="form-control" onchange="renderReports()">
+              <option value="ALL">සියලුම සේවකයින් (All 5)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="report-actions-bar">
+          <button class="btn-action-sm btn-wa-report" onclick="sendReportToWhatsApp()">
+            📲 WhatsApp Report (0711334788)
+          </button>
+          <button class="btn-action-sm btn-print-report" onclick="printReport()">
+            🖨️ Print වාර්තාව
+          </button>
+          <button class="btn-action-sm btn-sync-report" onclick="syncFromGoogleSheet(true)">
+            🔄 Google Sheet Sync
+          </button>
+        </div>
+      </div>
+
+      <!-- Report Totals -->
+      <div class="home-summary-grid" style="margin-bottom: 16px;">
+        <div class="mini-stat">
+          <div id="repTotalRecords" class="mini-stat-val">0</div>
+          <div class="mini-stat-lbl">මුළු වාර (Records)</div>
+        </div>
+        <div class="mini-stat">
+          <div id="repTotalWork" class="mini-stat-val" style="color: #16a34a;">0h 0m</div>
+          <div class="mini-stat-lbl">මුළු වැඩ කළ කාලය</div>
+        </div>
+        <div class="mini-stat">
+          <div id="repTotalOT" class="mini-stat-val" style="color: #d97706;">0h 0m</div>
+          <div class="mini-stat-lbl">මුළු අතිකාල (Total OT)</div>
+        </div>
+      </div>
+
+      <!-- Report Table -->
+      <div class="card">
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>දිනය (Date)</th>
+                <th>සේවකයා (Employee)</th>
+                <th>පැමිණීම (IN)</th>
+                <th>පිටවීම (OUT)</th>
+                <th>වැඩ කළ කාලය</th>
+                <th>Overtime (OT)</th>
+                <th>තත්ත්වය</th>
+              </tr>
+            </thead>
+            <tbody id="reportTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Print-Only Signatures -->
+      <div class="print-only print-signatures">
+        <div class="sig-line">Prepared By (නිලධාරියාගේ අත්සන)</div>
+        <div class="sig-line">Authorized Signature (Didula Engineers)</div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 5: SETTINGS ==================== -->
+    <section id="view-settings" class="view-section">
+      <div class="page-bar">
+        <button class="btn-back" onclick="showView('home')">← මුල් පිටුවට</button>
+        <div class="page-heading">පද්ධති සැකසුම් (Settings)</div>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 10px;">1. Google Sheet සම්බන්ධතාවය (Apps Script URL)</h3>
+        <div class="form-group">
+          <label for="settingSheetUrl">Google Apps Script Web App URL (https://script.google.com/macros/s/.../exec)</label>
+          <input type="url" id="settingSheetUrl" class="form-control" placeholder="https://script.google.com/macros/s/XXXXX/exec" />
+        </div>
+        <button class="btn-save" style="background: #16a34a;" onclick="testAndSaveSheetUrl()">
+          🔗 Google Sheet සම්බන්ධ කර පරීක්ෂා කරන්න (Connect &amp; Sync)
+        </button>
+
+        <div class="setup-guide">
+          <strong>Google Sheet එක සම්බන්ධ කරන ආකාරය:</strong>
+          <ol>
+            <li>Google Sheet එකේ <b>Extensions &gt; Apps Script</b> වෙත ගොස් ලබා දුන් Script එක Paste කර Save කරන්න.</li>
+            <li><b>Deploy &gt; New deployment &gt; Web app</b> තෝරා <b>Who has access: Anyone</b> ලෙස දී Deploy කරන්න.</li>
+            <li>ලැබෙන <b>Web app URL</b> එක ඉහත කොටුවට Paste කර <b>Connect &amp; Sync</b> ඔබන්න.</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 10px;">2. සේවකයින් 5 දෙනාගේ නම් (5 Employees)</h3>
+        <div id="employeeNameInputs" style="display: grid; gap: 10px;"></div>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 10px;">3. WhatsApp සහ Overtime සැකසුම්</h3>
+        <div class="filter-inputs-grid">
+          <div class="form-group">
+            <label for="settingWaNumber">WhatsApp දුරකථන අංකය</label>
+            <input type="text" id="settingWaNumber" class="form-control" value="0711334788" />
+          </div>
+          <div class="form-group">
+            <label for="settingStdHours">සාමාන්‍ය වැඩ පැය ගණන (OT Calculation)</label>
+            <input type="number" step="0.5" min="1" max="24" id="settingStdHours" class="form-control" value="8.5" />
+          </div>
+          <div class="form-group">
+            <label for="settingAutoWa">IN/OUT එබූ විගස WhatsApp විවෘත වීම</label>
+            <select id="settingAutoWa" class="form-control">
+              <option value="yes">ඔව් (Auto Open WhatsApp)</option>
+              <option value="no">නැත (Show Button Only)</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="btn-save" onclick="saveGeneralSettings()">💾 සැකසුම් සුරකින්න (Save Settings)</button>
+        <button class="btn-outline" onclick="downloadHtmlApp()">⬇️ සම්පූර්ණ App එක Download කරන්න (.html)</button>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="app-footer no-print">
+    Didula Engineers (දිදුල ඉංජිනියර්ස්) • Desk Attendance &amp; Overtime System
+  </footer>
+
+  <div id="toast" class="toast no-print"></div>
+
+  <script>
+    // ==================== STATE & STORAGE KEYS ====================
+    const STORAGE_KEYS = {
+      SHEET_URL: 'didula_sheet_url_v2',
+      EMPLOYEES: 'didula_employees_v2',
+      RECORDS: 'didula_records_v2',
+      SETTINGS: 'didula_settings_v2'
+    };
+
+    const DEFAULT_EMPLOYEES = [
+      'Kalthota',
+      'Prakash',
+      'Demala Podi Eka',
+      'Anith Demala Podi Eka',
+      'Sewakaya 5'
+    ];
+
+    const DEFAULT_SETTINGS = {
+      waNumber: '0711334788',
+      stdHours: 8.5, // 8:30 AM to 5:00 PM = 8.5 hours
+      autoOpenWa: 'yes'
+    };
+
+    let state = {
+      sheetUrl: '',
+      employees: [...DEFAULT_EMPLOYEES],
+      records: [],
+      settings: { ...DEFAULT_SETTINGS },
+      selectedEmployee: '',
+      currentRange: 'today',
+      isSyncing: false
+    };
+
+    // ==================== INITIALIZATION ====================
+    function initApp() {
+      loadLocalState();
+      updateClock();
+      setInterval(updateClock, 1000);
+      renderHomeStats();
+      renderEmployeeGrid();
+      populateSettingsForm();
+      setReportRange('today', document.querySelector('.chip-btn[data-range="today"]'));
+      updateSyncBadge();
+
+      // Automatically fetch latest data from Google Sheet on every open/restart
+      if (state.sheetUrl) {
+        syncFromGoogleSheet(false);
+      }
+    }
+
+    function loadLocalState() {
+      try {
+        const savedUrl = localStorage.getItem(STORAGE_KEYS.SHEET_URL);
+        if (savedUrl) state.sheetUrl = savedUrl.trim();
+
+        const savedEmps = localStorage.getItem(STORAGE_KEYS.EMPLOYEES);
+        if (savedEmps) {
+          const parsed = JSON.parse(savedEmps);
+          if (Array.isArray(parsed) && parsed.length === 5) {
+            state.employees = parsed;
+          }
+        }
+
+        const savedRecs = localStorage.getItem(STORAGE_KEYS.RECORDS);
+        if (savedRecs) {
+          const parsedRecs = JSON.parse(savedRecs);
+          if (Array.isArray(parsedRecs)) {
+            state.records = parsedRecs;
+          }
+        }
+
+        const savedSet = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+        if (savedSet) {
+          state.settings = { ...DEFAULT_SETTINGS, ...JSON.parse(savedSet) };
+        }
+      } catch (err) {
+        console.warn('Local storage read fallback:', err);
+      }
+    }
+
+    function saveLocalState() {
+      try {
+        localStorage.setItem(STORAGE_KEYS.SHEET_URL, state.sheetUrl);
+        localStorage.setItem(STORAGE_KEYS.EMPLOYEES, JSON.stringify(state.employees));
+        localStorage.setItem(STORAGE_KEYS.RECORDS, JSON.stringify(state.records));
+        localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(state.settings));
+      } catch (err) {
+        console.warn('Local storage write fallback:', err);
+      }
+    }
+
+    // ==================== DATE & TIME HELPERS ====================
+    function getTodayDateString() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function formatDisplayTime(dateObj) {
+      let hours = dateObj.getHours();
+      const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+      const seconds = String(dateObj.getSeconds()).padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      return `${String(hours).padStart(2, '0')}:${minutes}:${seconds} ${ampm}`;
+    }
+
+    function parseTimeToMinutes(dateStr, timeStr) {
+      if (!timeStr) return null;
+      // Handle ISO timestamp if stored
+      if (timeStr.includes('T')) {
+        const d = new Date(timeStr);
+        if (!isNaN(d.getTime())) return d.getTime();
+      }
+      // Parse "HH:MM:SS AM/PM"
+      const match = timeStr.trim().match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)$/i);
+      if (match && dateStr) {
+        let h = parseInt(match[1], 10);
+        const min = parseInt(match[2], 10);
+        const sec = parseInt(match[3] || '0', 10);
+        const period = match[4].toUpperCase();
+        if (period === 'PM' && h !== 12) h += 12;
+        if (period === 'AM' && h === 12) h = 0;
+        const [yr, mo, dy] = dateStr.split('-').map(Number);
+        return new Date(yr, mo - 1, dy, h, min, sec).getTime();
+      }
+      return null;
+    }
+
+    function formatDuration(totalMinutes) {
+      const mins = Math.max(0, Math.round(totalMinutes));
+      const h = Math.floor(mins / 60);
+      const m = mins % 60;
+      return `${h}h ${m}m`;
+    }
+
+    // ==================== LIVE CLOCK (GREEN <= 8:30 AM, RED > 8:30 AM) ====================
+    function updateClock() {
+      const now = new Date();
+      const timeStr = formatDisplayTime(now);
+      const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      const dateDisplay = now.toLocaleDateString('en-US', dateOptions);
+
+      const hours = now.getHours();
+      const minutes = now.getMinutes();
+      const seconds = now.getSeconds();
+      // Strictly up to 08:30:00 AM is GREEN; 08:30:01 AM onwards is RED
+      const isLate = (hours > 8) || (hours === 8 && minutes > 30) || (hours === 8 && minutes === 30 && seconds > 0);
+
+      const clockEl = document.getElementById('digitalClock');
+      const cardEl = document.getElementById('clockCard');
+      const badgeEl = document.getElementById('clockStatusBadge');
+      const dateEl = document.getElementById('homeDateDisplay');
+      const actionClockEl = document.getElementById('actionLiveClock');
+
+      if (dateEl) dateEl.textContent = `${dateDisplay} (${getTodayDateString()})`;
+      if (clockEl) {
+        clockEl.textContent = timeStr;
+        clockEl.className = `digital-clock ${isLate ? 'clock-red' : 'clock-green'}`;
+      }
+      if (cardEl) {
+        cardEl.className = `card clock-card ${isLate ? 'late-time' : 'on-time'}`;
+      }
+      if (badgeEl) {
+        badgeEl.className = `clock-status-badge ${isLate ? 'late-time' : 'on-time'}`;
+        badgeEl.textContent = isLate
+          ? 'ප්‍රමාද වී ඇත / Late Window (8:30 AM පසු — රතු පැහැය)'
+          : 'නියමිත වේලාව / On-Time Window (8:30 AM දක්වා — කොළ පැහැය)';
+      }
+      if (actionClockEl) {
+        actionClockEl.textContent = timeStr;
+        actionClockEl.className = `action-live-time ${isLate ? 'clock-red' : 'clock-green'}`;
+      }
+    }
+
+    // ==================== NAVIGATION ====================
+    function showView(viewName) {
+      document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+      const target = document.getElementById(`view-${viewName}`);
+      if (target) target.classList.add('active');
+
+      if (viewName === 'home') renderHomeStats();
+      if (viewName === 'employees') renderEmployeeGrid();
+      if (viewName === 'reports') {
+        populateEmployeeFilter();
+        renderReports();
+      }
+      if (viewName === 'settings') populateSettingsForm();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ==================== GOOGLE SHEETS TWO-WAY SYNC ====================
+    function updateSyncBadge() {
+      const pill = document.getElementById('syncPill');
+      const text = document.getElementById('syncPillText');
+      const hint = document.getElementById('homeSheetHint');
+      if (!pill || !text) return;
+
+      if (state.isSyncing) {
+        pill.className = 'sync-pill syncing';
+        text.textContent = 'Syncing...';
+        return;
+      }
+
+      if (state.sheetUrl) {
+        pill.className = 'sync-pill connected';
+        text.textContent = 'Google Sheet Connected';
+        if (hint) hint.textContent = '✅ Google Sheet සම්බන්ධයි — සියලුම IN/OUT දත්ත ස්වයංක්‍රීයව සුරැකේ.';
+      } else {
+        pill.className = 'sync-pill';
+        text.textContent = 'Local Mode (Set URL)';
+        if (hint) hint.textContent = '⚠️ ස්ථිරව දත්ත සුරැකීමට සැකසුම් (Settings) වෙත ගොස් Google Sheet URL එක ඇතුළත් කරන්න.';
+      }
+    }
+
+    async function syncFromGoogleSheet(showNotification = true) {
+      if (!state.sheetUrl) {
+        if (showNotification) showToast('පළමුව Settings වෙත ගොස් Google Sheet URL එක ඇතුළත් කරන්න.');
+        return false;
+      }
+
+      state.isSyncing = true;
+      updateSyncBadge();
+
+      try {
+        const urlWithCacheBust = `${state.sheetUrl}${state.sheetUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
+        const response = await fetch(urlWithCacheBust, { method: 'GET' });
+        const data = await response.json();
+
+        if (data && data.status === 'success') {
+          if (Array.isArray(data.records)) {
+            // Merge remote records with any unsynced local records
+            const remoteMap = new Map();
+            data.records.forEach(r => remoteMap.set(String(r.id), r));
+
+            state.records.forEach(localRec => {
+              if (!remoteMap.has(String(localRec.id))) {
+                remoteMap.set(String(localRec.id), localRec);
+              }
+            });
+
+            state.records = Array.from(remoteMap.values());
+          }
+
+          if (Array.isArray(data.employees) && data.employees.length === 5) {
+            state.employees = data.employees;
+          }
+
+          saveLocalState();
+          renderHomeStats();
+          renderEmployeeGrid();
+          if (state.selectedEmployee) refreshActionScreen();
+          renderReports();
+          populateSettingsForm();
+
+          if (showNotification) showToast('✅ Google Sheet සමඟ සාර්ථකව Sync විය!');
+          return true;
+        } else {
+          if (showNotification) showToast('⚠️ Google Sheet දත්ත ලබා ගැනීමේදී ගැටලුවක් ඇති විය.');
+          return false;
+        }
+      } catch (error) {
+        console.error('Google Sheet GET error:', error);
+        if (showNotification) showToast('❌ Google Sheet සම්බන්ධ වීමට නොහැක. URL සහ Internet පරීක්ෂා කරන්න.');
+        return false;
+      } finally {
+        state.isSyncing = false;
+        updateSyncBadge();
+      }
+    }
+
+    async function pushToGoogleSheet(payload) {
+      if (!state.sheetUrl) return;
+      try {
+        // Using text/plain avoids CORS preflight issues with Google Apps Script doPost
+        await fetch(state.sheetUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
+      } catch (err) {
+        console.error('Google Sheet POST error:', err);
+      }
+    }
+
+    // ==================== EMPLOYEE STATUS & ATTENDANCE LOGIC ====================
+    function getTodayRecordForEmployee(empName) {
+      const today = getTodayDateString();
+      // Find active IN record first, otherwise latest record for today
+      const todayRecs = state.records.filter(r => r.date === today && r.employee === empName);
+      if (todayRecs.length === 0) return null;
+      const openRec = todayRecs.find(r => r.status === 'IN' || !r.outTime);
+      return openRec || todayRecs[todayRecs.length - 1];
+    }
+
+    function renderHomeStats() {
+      let working = 0;
+      let completed = 0;
+      let absent = 0;
+
+      state.employees.forEach(emp => {
+        const rec = getTodayRecordForEmployee(emp);
+        if (!rec) {
+          absent++;
+        } else if (rec.status === 'IN' && !rec.outTime) {
+          working++;
+        } else {
+          completed++;
+        }
+      });
+
+      document.getElementById('statWorkingCount').textContent = `${working} / ${state.employees.length}`;
+      document.getElementById('statCompletedCount').textContent = String(completed);
+      document.getElementById('statAbsentCount').textContent = String(absent);
+    }
+
+    function renderEmployeeGrid() {
+      const grid = document.getElementById('employeeGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      state.employees.forEach((empName, idx) => {
+        const rec = getTodayRecordForEmployee(empName);
+        let statusClass = '';
+        let statusText = 'පැමිණ නැත (Not In)';
+
+        if (rec) {
+          if (rec.status === 'IN' && !rec.outTime) {
+            statusClass = 'is-in';
+            statusText = `වැඩ කරමින් සිටී • IN ${rec.inTime}`;
+          } else {
+            statusClass = 'is-out';
+            statusText = `පිටව ගොස් ඇත • OUT ${rec.outTime}`;
+          }
+        }
+
+        const btn = document.createElement('button');
+        btn.className = `emp-btn ${statusClass}`;
+        btn.onclick = () => openEmployeeAction(empName);
+        btn.innerHTML = `
+          <div class="emp-avatar">${idx + 1}</div>
+          <div class="emp-info">
+            <div class="emp-name">${escapeHtml(empName)}</div>
+            <span class="emp-status-tag">${escapeHtml(statusText)}</span>
+          </div>
+          <div style="font-size: 20px; color: #94a3b8;">›</div>
+        `;
+        grid.appendChild(btn);
+      });
+    }
+
+    function openEmployeeAction(empName) {
+      state.selectedEmployee = empName;
+      document.getElementById('waFeedbackBox').classList.remove('visible');
+      refreshActionScreen();
+      showView('action');
+    }
+
+    function refreshActionScreen() {
+      const empName = state.selectedEmployee;
+      const today = getTodayDateString();
+      const rec = getTodayRecordForEmployee(empName);
+
+      document.getElementById('actionEmpName').textContent = empName;
+      document.getElementById('actionEmpDate').textContent = `දිනය: ${today}`;
+
+      const btnIn = document.getElementById('btnPunchIn');
+      const btnOut = document.getElementById('btnPunchOut');
+
+      if (!rec) {
+        document.getElementById('detailInTime').textContent = '--:--';
+        document.getElementById('detailOutTime').textContent = '--:--';
+        document.getElementById('detailWorkDuration').textContent = '0h 0m';
+        document.getElementById('detailOtDuration').textContent = '0h 0m';
+        btnIn.disabled = false;
+        btnOut.disabled = true;
+      } else if (rec.status === 'IN' && !rec.outTime) {
+        document.getElementById('detailInTime').textContent = rec.inTime;
+        document.getElementById('detailOutTime').textContent = 'Working...';
+
+        const inMs = parseTimeToMinutes(rec.date, rec.inTime);
+        const liveMins = inMs ? Math.max(0, (Date.now() - inMs) / 60000) : 0;
+        const stdMins = (parseFloat(state.settings.stdHours) || 8.5) * 60;
+        const liveOt = Math.max(0, liveMins - stdMins);
+
+        document.getElementById('detailWorkDuration').textContent = formatDuration(liveMins);
+        document.getElementById('detailOtDuration').textContent = formatDuration(liveOt);
+
+        btnIn.disabled = true;
+        btnOut.disabled = false;
+      } else {
+        document.getElementById('detailInTime').textContent = rec.inTime || '--:--';
+        document.getElementById('detailOutTime').textContent = rec.outTime || '--:--';
+        document.getElementById('detailWorkDuration').textContent = rec.workDuration || '0h 0m';
+        document.getElementById('detailOtDuration').textContent = formatDuration(rec.otMinutes || 0);
+
+        // Allow a second shift IN if already clocked out today
+        btnIn.disabled = false;
+        btnOut.disabled = true;
+      }
+    }
+
+    async function handleClockIn() {
+      const empName = state.selectedEmployee;
+      if (!empName) return;
+
+      const existingOpen = state.records.find(
+        r => r.date === getTodayDateString() && r.employee === empName && r.status === 'IN' && !r.outTime
+      );
+      if (existingOpen) {
+        showToast('මෙම සේවකයා දැනටමත් IN සටහන් කර ඇත!');
+        return;
+      }
+
+      const now = new Date();
+      const today = getTodayDateString();
+      const timeStr = formatDisplayTime(now);
+      const isLate = (now.getHours() > 8) || (now.getHours() === 8 && now.getMinutes() > 30);
+
+      const newRecord = {
+        id: `${today}_${empName.replace(/\s+/g, '_')}_${Date.now()}`,
+        date: today,
+        employee: empName,
+        inTime: timeStr,
+        outTime: '',
+        workDuration: '',
+        otMinutes: 0,
+        status: 'IN'
+      };
+
+      state.records.push(newRecord);
+      saveLocalState();
+      refreshActionScreen();
+      renderHomeStats();
+      renderEmployeeGrid();
+      showToast(`✅ ${empName} පැමිණීම (IN) සටහන් විය!`);
+
+      // Push to Google Sheet immediately
+      pushToGoogleSheet({ action: 'clockIn', record: newRecord });
+
+      // Prepare WhatsApp Message
+      const msg =
+        `*DIDULA ENGINEERS — පැමිණීම (IN)*\n` +
+        `👤 සේවකයා: *${empName}*\n` +
+        `📅 දිනය: ${today}\n` +
+        `⏰ පැමිණි වේලාව: *${timeStr}*\n` +
+        `📌 තත්ත්වය: ${isLate ? '🔴 ප්‍රමාද වී ඇත (After 8:30 AM)' : '🟢 නියමිත වේලාවට (On Time)'}`;
+
+      triggerWhatsAppMessage(msg);
+    }
+
+    async function handleClockOut() {
+      const empName = state.selectedEmployee;
+      if (!empName) return;
+
+      const today = getTodayDateString();
+      const openRecord = state.records.find(
+        r => r.date === today && r.employee === empName && (r.status === 'IN' || !r.outTime)
+      );
+
+      if (!openRecord) {
+        showToast('පළමුව පැමිණීම (IN) සටහන් කර තිබිය යුතුය.');
+        return;
+      }
+
+      const now = new Date();
+      const outTimeStr = formatDisplayTime(now);
+      const inMs = parseTimeToMinutes(openRecord.date, openRecord.inTime);
+      const outMs = now.getTime();
+
+      const workedMins = inMs ? Math.max(0, Math.round((outMs - inMs) / 60000)) : 0;
+      const stdMins = Math.round((parseFloat(state.settings.stdHours) || 8.5) * 60);
+      const otMins = Math.max(0, workedMins - stdMins);
+      const workDurationStr = formatDuration(workedMins);
+
+      openRecord.outTime = outTimeStr;
+      openRecord.workDuration = workDurationStr;
+      openRecord.otMinutes = otMins;
+      openRecord.status = 'OUT';
+
+      saveLocalState();
+      refreshActionScreen();
+      renderHomeStats();
+      renderEmployeeGrid();
+      showToast(`✅ ${empName} පිටවීම (OUT) සහ OT සටහන් විය!`);
+
+      // Push update to Google Sheet immediately
+      pushToGoogleSheet({ action: 'clockOut', record: openRecord });
+
+      // Prepare WhatsApp Message
+      const msg =
+        `*DIDULA ENGINEERS — පිටවීම (OUT)*\n` +
+        `👤 සේවකයා: *${empName}*\n` +
+        `📅 දිනය: ${today}\n` +
+        `🟢 පැමිණීම (IN): ${openRecord.inTime}\n` +
+        `🔴 පිටවීම (OUT): *${outTimeStr}*\n` +
+        `⏳ වැඩ කළ කාලය: *${workDurationStr}*\n` +
+        `⚡ අතිකාල (Overtime): *${formatDuration(otMins)}*`;
+
+      triggerWhatsAppMessage(msg);
+    }
+
+    function formatWhatsAppPhone(rawNumber) {
+      let digits = String(rawNumber || '0711334788').replace(/\D/g, '');
+      if (digits.startsWith('0') && digits.length === 10) {
+        digits = '94' + digits.substring(1);
+      }
+      return digits || '94711334788';
+    }
+
+    function triggerWhatsAppMessage(text) {
+      const phone = formatWhatsAppPhone(state.settings.waNumber);
+      const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+
+      const box = document.getElementById('waFeedbackBox');
+      const preview = document.getElementById('waMsgPreview');
+      const link = document.getElementById('waDirectLink');
+
+      if (preview) preview.textContent = text;
+      if (link) {
+        link.href = waUrl;
+        link.textContent = `📲 WhatsApp වෙත යවන්න (${state.settings.waNumber || '0711334788'})`;
+      }
+      if (box) box.classList.add('visible');
+
+      if (state.settings.autoOpenWa === 'yes') {
+        setTimeout(() => {
+          window.open(waUrl, '_blank', 'noopener');
+        }, 350);
+      }
+    }
+
+    // ==================== REPORTS, FILTERING, WHATSAPP & PRINT ====================
+    function populateEmployeeFilter() {
+      const select = document.getElementById('filterEmployee');
+      if (!select) return;
+      const currentVal = select.value || 'ALL';
+      select.innerHTML = '<option value="ALL">සියලුම සේවකයින් (All 5)</option>';
+      state.employees.forEach(emp => {
+        const opt = document.createElement('option');
+        opt.value = emp;
+        opt.textContent = emp;
+        select.appendChild(opt);
+      });
+      select.value = currentVal;
+    }
+
+    function setReportRange(rangeType, btnEl) {
+      state.currentRange = rangeType;
+      document.querySelectorAll('.chip-btn[data-range]').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+
+      const now = new Date();
+      const todayStr = getTodayDateString();
+      const fromInput = document.getElementById('filterFromDate');
+      const toInput = document.getElementById('filterToDate');
+
+      if (rangeType === 'today') {
+        fromInput.value = todayStr;
+        toInput.value = todayStr;
+      } else if (rangeType === 'week') {
+        const weekAgo = new Date(now);
+        weekAgo.setDate(now.getDate() - 6);
+        fromInput.value = `${weekAgo.getFullYear()}-${String(weekAgo.getMonth() + 1).padStart(2, '0')}-${String(weekAgo.getDate()).padStart(2, '0')}`;
+        toInput.value = todayStr;
+      } else if (rangeType === 'month') {
+        fromInput.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+        toInput.value = todayStr;
+      } else if (rangeType === 'all') {
+        fromInput.value = '';
+        toInput.value = '';
+      }
+
+      renderReports();
+    }
+
+    function getFilteredRecords() {
+      const fromDate = document.getElementById('filterFromDate')?.value || '';
+      const toDate = document.getElementById('filterToDate')?.value || '';
+      const empFilter = document.getElementById('filterEmployee')?.value || 'ALL';
+
+      return state.records
+        .filter(r => {
+          if (fromDate && r.date < fromDate) return false;
+          if (toDate && r.date > toDate) return false;
+          if (empFilter !== 'ALL' && r.employee !== empFilter) return false;
+          return true;
+        })
+        .sort((a, b) => (b.date + (b.inTime || '')).localeCompare(a.date + (a.inTime || '')));
+    }
+
+    function renderReports() {
+      const filtered = getFilteredRecords();
+      const tbody = document.getElementById('reportTableBody');
+      if (!tbody) return;
+
+      let totalWorkMins = 0;
+      let totalOtMins = 0;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" style="text-align: center; padding: 24px; color: #64748b;">
+              තෝරාගත් කාල පරාසය තුළ දත්ත හමු නොවීය (No records found).
+            </td>
+          </tr>
+        `;
+      } else {
+        tbody.innerHTML = filtered.map(r => {
+          const ot = Number(r.otMinutes) || 0;
+          totalOtMins += ot;
+
+          // Parse workDuration "Xh Ym" for total sum
+          const wm = String(r.workDuration || '').match(/(\d+)h\s*(\d+)m/);
+          if (wm) {
+            totalWorkMins += (parseInt(wm[1], 10) * 60) + parseInt(wm[2], 10);
+          }
+
+          const isOut = r.status === 'OUT' || Boolean(r.outTime);
+          return `
+            <tr>
+              <td>${escapeHtml(r.date)}</td>
+              <td style="font-weight: 700;">${escapeHtml(r.employee)}</td>
+              <td style="color: #15803d; font-weight: 700;">${escapeHtml(r.inTime || '--')}</td>
+              <td style="color: #b91c1c; font-weight: 700;">${escapeHtml(r.outTime || '--')}</td>
+              <td>${escapeHtml(r.workDuration || (isOut ? '0h 0m' : 'වැඩ කරමින්'))}</td>
+              <td style="color: #d97706; font-weight: 700;">${formatDuration(ot)}</td>
+              <td>
+                <span class="badge-status ${isOut ? 'badge-out' : 'badge-in'}">
+                  ${isOut ? 'OUT' : 'IN'}
+                </span>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      document.getElementById('repTotalRecords').textContent = String(filtered.length);
+      document.getElementById('repTotalWork').textContent = formatDuration(totalWorkMins);
+      document.getElementById('repTotalOT').textContent = formatDuration(totalOtMins);
+    }
+
+    function sendReportToWhatsApp() {
+      const filtered = getFilteredRecords();
+      const fromDate = document.getElementById('filterFromDate')?.value || 'Start';
+      const toDate = document.getElementById('filterToDate')?.value || 'Today';
+
+      if (filtered.length === 0) {
+        showToast('යැවීමට වාර්තා දත්ත නොමැත.');
+        return;
+      }
+
+      let lines = [
+        `*DIDULA ENGINEERS — ATTENDANCE REPORT*`,
+        `📅 කාලය: ${fromDate} සිට ${toDate}`,
+        `📊 මුළු වාර: ${filtered.length}`,
+        `--------------------------------`
+      ];
+
+      filtered.slice(0, 25).forEach(r => {
+        lines.push(
+          `• *${r.employee}* (${r.date})\n  IN: ${r.inTime} | OUT: ${r.outTime || 'Working'} | OT: ${formatDuration(r.otMinutes || 0)}`
+        );
+      });
+
+      const phone = formatWhatsAppPhone(state.settings.waNumber);
+      const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(lines.join('\n'))}`;
+      window.open(waUrl, '_blank', 'noopener');
+    }
+
+    function printReport() {
+      const fromDate = document.getElementById('filterFromDate')?.value || 'All Dates';
+      const toDate = document.getElementById('filterToDate')?.value || 'Today';
+      document.getElementById('printPeriodLabel').textContent = `Period: ${fromDate} to ${toDate}`;
+      document.getElementById('printGeneratedLabel').textContent = `Printed: ${new Date().toLocaleString()}`;
+      window.print();
+    }
+
+    // ==================== SETTINGS & DOWNLOAD ====================
+    function populateSettingsForm() {
+      const urlInput = document.getElementById('settingSheetUrl');
+      if (urlInput) urlInput.value = state.sheetUrl || '';
+
+      const empContainer = document.getElementById('employeeNameInputs');
+      if (empContainer) {
+        empContainer.innerHTML = state.employees.map((name, i) => `
+          <div class="form-group">
+            <label for="empInput_${i}">සේවකයා ${i + 1} (Employee ${i + 1})</label>
+            <input type="text" id="empInput_${i}" class="form-control" value="${escapeHtml(name)}" />
+          </div>
+        `).join('');
+      }
+
+      const waInput = document.getElementById('settingWaNumber');
+      const stdInput = document.getElementById('settingStdHours');
+      const autoInput = document.getElementById('settingAutoWa');
+
+      if (waInput) waInput.value = state.settings.waNumber || '0711334788';
+      if (stdInput) stdInput.value = state.settings.stdHours || 8.5;
+      if (autoInput) autoInput.value = state.settings.autoOpenWa || 'yes';
+    }
+
+    async function testAndSaveSheetUrl() {
+      const urlVal = (document.getElementById('settingSheetUrl')?.value || '').trim();
+      if (!urlVal || !urlVal.startsWith('https://script.google.com/')) {
+        showToast('⚠️ නිවැරදි Google Apps Script Web App URL එකක් ඇතුළත් කරන්න.');
+        return;
+      }
+
+      state.sheetUrl = urlVal;
+      saveLocalState();
+      updateSyncBadge();
+
+      const ok = await syncFromGoogleSheet(true);
+      if (ok) {
+        pushToGoogleSheet({ action: 'saveEmployees', employees: state.employees });
+      }
+    }
+
+    function saveGeneralSettings() {
+      const updatedEmps = [];
+      for (let i = 0; i < 5; i++) {
+        const val = (document.getElementById(`empInput_${i}`)?.value || '').trim();
+        updatedEmps.push(val || DEFAULT_EMPLOYEES[i]);
+      }
+
+      state.employees = updatedEmps;
+      state.settings.waNumber = (document.getElementById('settingWaNumber')?.value || '0711334788').trim();
+      state.settings.stdHours = parseFloat(document.getElementById('settingStdHours')?.value) || 8.5;
+      state.settings.autoOpenWa = document.getElementById('settingAutoWa')?.value || 'yes';
+
+      saveLocalState();
+      renderHomeStats();
+      renderEmployeeGrid();
+      populateEmployeeFilter();
+
+      if (state.sheetUrl) {
+        pushToGoogleSheet({ action: 'saveEmployees', employees: state.employees });
+      }
+
+      showToast('✅ සැකසුම් සාර්ථකව සුරැකුණි!');
+    }
+
+    function downloadHtmlApp() {
+      const htmlContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Didula_Engineers_Attendance_System.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('⬇️ App ගොනුව Download වෙමින් පවතී...');
+    }
+
+    // ==================== UTILITIES ====================
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      if (!toast) return;
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3200);
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Start app immediately on DOM ready
+    window.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>
